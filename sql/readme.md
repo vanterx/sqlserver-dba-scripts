@@ -1,5 +1,3 @@
-# Welcome - DBA Scripts and Links
-
 ## Essential DBA Tools & Resources
 
 ### Community Tools
