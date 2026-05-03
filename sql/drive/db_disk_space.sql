@@ -20,7 +20,7 @@ AS (
         @@SERVERNAME AS ServerName,
         DB_NAME(dovs.database_id) AS DBName,
         mf.physical_name AS PhysicalFileLocation,
-        mf.size * 8 / 1024 / 1024 AS size_GB,                     -- File size in GB (size is in 8KB pages)
+        CAST(mf.size AS BIGINT) * 8 / 1048576.0 AS size_GB,        -- File size in GB (BIGINT prevents overflow >2TB)
         type_desc,
         dovs.logical_volume_name AS LogicalName,
         dovs.volume_mount_point AS Drive,
@@ -28,14 +28,14 @@ AS (
         (CONVERT(INT, dovs.available_bytes / 1048576.0) / 1024) AS Drive_Free_Space_Available_InGB,
         CAST(
             (CONVERT(FLOAT, dovs.available_bytes / 1048576.0) / 1024) /
-            (CONVERT(FLOAT, dovs.total_bytes / 1048576.0) / 1024) * 100
+            NULLIF(CONVERT(FLOAT, dovs.total_bytes / 1048576.0) / 1024, 0) * 100
             AS DECIMAL(10, 2)
         ) AS [%_Free],
         -- Calculate how many GB to add to reach target free %
         -- Formula: (total * p1 - free) / p2 = GB to add
         CAST(
             ((((CONVERT(INT, dovs.total_bytes / 1048576.0) / 1024) * @p1) -
-              (CONVERT(INT, dovs.available_bytes / 1048576.0) / 1024)) / @p2)
+              (CONVERT(INT, dovs.available_bytes / 1048576.0) / 1024)) / NULLIF(@p2, 0))
             AS DECIMAL(10, 2)
         ) AS [target_%_add_gb]
     FROM sys.master_files mf

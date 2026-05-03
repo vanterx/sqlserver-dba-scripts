@@ -35,7 +35,7 @@ SELECT @@SERVERNAME AS [Server],
         WHEN log_reuse_wait_desc = 'NOTHING'
             THEN 'USE [' + d.name + N']' + CHAR(13) + CHAR(10) +
                  'DBCC SHRINKFILE (N''' + mf.name + N''' , ' +
-                 CAST(CAST(log_Free_Space_MB * @log_reduce_percent / 100 AS INT) AS NVARCHAR(128)) +
+                 CAST(CAST(log_Free_Space_MB * @log_reduce_percent / 100 AS BIGINT) AS NVARCHAR(128)) +
                  ');' + CHAR(13) + CHAR(10) + CHAR(13) + CHAR(10)
     END AS [tsql]
 FROM #logsize l

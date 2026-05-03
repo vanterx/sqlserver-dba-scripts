@@ -120,7 +120,7 @@ AS (
         d.name AS dbname,
         mf.name AS db_logical_name,
         mf.physical_name AS physicalfilelocation,
-        CAST((mf.size * 8 / 1024) AS DECIMAL(10, 2)) AS size_mb,
+        CAST((CAST(mf.size AS BIGINT) * 8 / 1024) AS DECIMAL(10, 2)) AS size_mb,
         type_desc,
         dovs.logical_volume_name AS logical_volume_name,
         dovs.volume_mount_point AS drive,
@@ -128,20 +128,20 @@ AS (
         (CONVERT(INT, dovs.available_bytes / 1048576.0) / 1024) AS drive_free_space_available_gb,
         CAST(
             (CONVERT(FLOAT, dovs.available_bytes / 1048576.0) / 1024) /
-            (CONVERT(FLOAT, dovs.total_bytes / 1048576.0) / 1024) * 100
+            NULLIF(CONVERT(FLOAT, dovs.total_bytes / 1048576.0) / 1024, 0) * 100
             AS DECIMAL(10, 2)
         ) AS [disk_free_%],
         -- GB to add to reach target free %
         CAST(
             ((((CONVERT(INT, dovs.total_bytes / 1048576.0) / 1024) * @p1) -
-              (CONVERT(INT, dovs.available_bytes / 1048576.0) / 1024)) / @p2)
+              (CONVERT(INT, dovs.available_bytes / 1048576.0) / 1024)) / NULLIF(@p2, 0))
             AS DECIMAL(10, 2)
         ) AS [target_%_add_gb],
         -- Total drive GB after adding target
         ((CONVERT(INT, dovs.available_bytes / 1048576.0) / 1024)) +
         CAST(
             ((((CONVERT(INT, dovs.total_bytes / 1048576.0) / 1024) * @p1) -
-              (CONVERT(INT, dovs.available_bytes / 1048576.0) / 1024)) / @p2)
+              (CONVERT(INT, dovs.available_bytes / 1048576.0) / 1024)) / NULLIF(@p2, 0))
             AS DECIMAL(10, 2)
         ) AS [drive_total_target_gb],
 
@@ -189,7 +189,7 @@ AS (
             WHEN LOWER(d.log_reuse_wait_desc) = 'nothing'
                 THEN 'USE [' + d.name + N']' + CHAR(13) + CHAR(10) +
                      'DBCC SHRINKFILE (N''' + mf.name + N''' , ' +
-                     CAST(CAST(l.log_free_space_mb * @log_reduce_percent / 100 AS INT) AS NVARCHAR(128)) +
+                     CAST(CAST(l.log_free_space_mb * @log_reduce_percent / 100 AS BIGINT) AS NVARCHAR(128)) +
                      ');' + CHAR(13) + CHAR(10) + CHAR(13) + CHAR(10)
         END AS [tsql],
 
