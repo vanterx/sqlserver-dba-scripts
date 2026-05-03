@@ -17,7 +17,7 @@
 
 .PARAMETER SqlInstance
     The SQL Server instance to query for Availability Group information.
-    If not specified, uses localhost or searches across all reachable instances.
+    This is required by the dbatools module.
 
 .PARAMETER Job
     An array of specific job names to copy. If specified, only these jobs will be copied.
@@ -37,32 +37,27 @@
     Shows which jobs would be copied to each secondary replica.
 
 .EXAMPLE
-    .\copy_jobs_to_secondary.ps1 -AvailabilityGroupName "AG_Production"
+    .\copy_jobs_to_secondary.ps1 -AvailabilityGroupName "AG_Production" -SqlInstance "PrimaryServer"
 
     Copies all jobs from the primary replica to all secondaries in AG_Production.
 
 .EXAMPLE
-    .\copy_jobs_to_secondary.ps1 -AvailabilityGroupName "AG_Production" -SqlInstance "PrimaryServer"
-
-    Copies jobs using a specific SQL instance to find the AG.
-
-.EXAMPLE
-    .\copy_jobs_to_secondary.ps1 -AvailabilityGroupName "AG_Production" -Job @("Backup_Full","Backup_Log")
+    .\copy_jobs_to_secondary.ps1 -AvailabilityGroupName "AG_Production" -SqlInstance "PrimaryServer" -Job @("Backup_Full","Backup_Log")
 
     Copies only the specified jobs.
 
 .EXAMPLE
-    .\copy_jobs_to_secondary.ps1 -AvailabilityGroupName "AG_Production" -ExcludeJobs @("JobToSkip","AnotherJob")
+    .\copy_jobs_to_secondary.ps1 -AvailabilityGroupName "AG_Production" -SqlInstance "PrimaryServer" -ExcludeJobs @("JobToSkip","AnotherJob")
 
     Copies all jobs except the specified ones.
 
 .EXAMPLE
-    .\copy_jobs_to_secondary.ps1 -AvailabilityGroupName "AG_Production" -Job @("Backup_") -WhatIf
+    .\copy_jobs_to_secondary.ps1 -AvailabilityGroupName "AG_Production" -SqlInstance "PrimaryServer" -Job @("Backup_") -WhatIf
 
     Preview which jobs matching the pattern would be copied.
 
 .EXAMPLE
-    .\copy_jobs_to_secondary.ps1 -AvailabilityGroupName "AG_Production" -TrustServerCertificate
+    .\copy_jobs_to_secondary.ps1 -AvailabilityGroupName "AG_Production" -SqlInstance "PrimaryServer" -TrustServerCertificate
 
     Copy jobs with self-signed certificate trust enabled.
 
@@ -95,6 +90,7 @@ param(
     [Parameter(Mandatory=$true)]
     [string]$AvailabilityGroupName,
 
+    [Parameter(Mandatory=$true)]
     [string]$SqlInstance,
 
     [string[]]$Job = @(),
@@ -123,11 +119,7 @@ if ($TrustServerCertificate) {
 }
 
 # Get Availability Group information
-if ($SqlInstance) {
-    $ag = Get-DbaAvailabilityGroup -SqlInstance $SqlInstance -AvailabilityGroup $AvailabilityGroupName
-} else {
-    $ag = Get-DbaAvailabilityGroup -AvailabilityGroup $AvailabilityGroupName
-}
+$ag = Get-DbaAvailabilityGroup -SqlInstance $SqlInstance -AvailabilityGroup $AvailabilityGroupName -EnableException
 
 if (-not $ag) {
     Write-Error "Availability Group '$AvailabilityGroupName' not found."
@@ -147,7 +139,7 @@ Write-Host "Primary Replica: $primaryReplica"
 Write-Host "Secondary Replicas: $($secondaryReplicas -join ', ')"
 
 # Get jobs from primary replica (filter by Job and ExcludeJobs)
-$jobs = Get-DbaAgentJob -SqlInstance $primaryReplica
+$jobs = Get-DbaAgentJob -SqlInstance $primaryReplica -EnableException
 
 # Filter jobs: include only those in $Job (if specified), then exclude $ExcludeJobs
 if ($Job.Count -gt 0) {
@@ -164,7 +156,7 @@ foreach ($secondary in $secondaryReplicas) {
     $jobs | ForEach-Object {
         $jobName = $_.Name
         Write-Host "  Processing job: $jobName"
-        Copy-DbaAgentJob -Source $primaryReplica -Destination $secondary -Job $jobName -Force -WhatIf:$WhatIf
+        Copy-DbaAgentJob -Source $primaryReplica -Destination $secondary -Job $jobName -Force -WhatIf:$WhatIf -EnableException
     }
 }
 
