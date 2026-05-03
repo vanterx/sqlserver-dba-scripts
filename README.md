@@ -2,6 +2,7 @@
 
 ### Community Tools
 - **[DBATools](https://dbatools.io/)** - sqlcollaborative
+- **[MSSQL Performance Skills](https://github.com/vanterx/mssql-performance-skills)** - Performance tuning resources
 - **[sp_whoisactive](http://whoisactive.com/downloads/)** - Adam Machanic
 - **[SQL Server Maintenance](https://ola.hallengren.com/downloads.html)** - Ola Hallengren
 - **[sp_blitz*](https://github.com/BrentOzarULTD/SQL-Server-First-Responder-Kit/releases)** - Brent Ozar Unlimited
@@ -29,6 +30,8 @@
 - **[NetSPI_PS](https://github.com/NetSPI/Powershell-Modules)** - MSSQL Credentials
 - **[dba-multitool](https://github.com/LowlyDBA/dba-multitool)**
 - **[WorkloadTools](https://github.com/spaghettidba/WorkloadTools)**
+- **[ThreadJob](https://github.com/Microsoft/ThreadJob)** - PowerShell parallel processing (PS 5.1+)
+- **[PoshRSJob](https://github.com/proxb/PoshRSJob)** - Runspace-based parallel jobs
 
 ---
 
