@@ -1,0 +1,23 @@
+# Temp files
+*.log
+*.tmp
+*.bak
+*.swp
+*~
+
+# SQL artifacts
+*.cache
+*.output
+
+# Windows
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Environment
+.env
+.env.local
+
+# Output directories
+output/
+temp/
