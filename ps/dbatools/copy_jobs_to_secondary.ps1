@@ -145,13 +145,8 @@ foreach ($secondary in $secondaryReplicas) {
 
     $jobs | ForEach-Object {
         $jobName = $_.Name
-
-        if ($WhatIf) {
-            Write-Host "  [WhatIf] Would copy job: $jobName"
-        } else {
-            Copy-DbaAgentJob -Source $primaryReplica -Destination $secondary -Job $jobName -Force
-            Write-Host "  Copied job: $jobName"
-        }
+        Write-Host "  Processing job: $jobName"
+        Copy-DbaAgentJob -Source $primaryReplica -Destination $secondary -Job $jobName -Force -WhatIf:$WhatIf
     }
 }
 
