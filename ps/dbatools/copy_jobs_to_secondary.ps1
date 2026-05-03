@@ -19,6 +19,11 @@
     The SQL Server instance to query for Availability Group information.
     If not specified, uses localhost or searches across all reachable instances.
 
+.PARAMETER Job
+    An array of specific job names to copy. If specified, only these jobs will be copied.
+    Use this to copy specific jobs rather than all jobs.
+    Default: @() (copies all jobs)
+
 .PARAMETER ExcludeJobs
     An array of job names to exclude from copying.
     Default: @() (no exclusions)
@@ -42,14 +47,19 @@
     Copies jobs using a specific SQL instance to find the AG.
 
 .EXAMPLE
+    .\copy_jobs_to_secondary.ps1 -AvailabilityGroupName "AG_Production" -Job @("Backup_Full","Backup_Log")
+
+    Copies only the specified jobs.
+
+.EXAMPLE
     .\copy_jobs_to_secondary.ps1 -AvailabilityGroupName "AG_Production" -ExcludeJobs @("JobToSkip","AnotherJob")
 
     Copies all jobs except the specified ones.
 
 .EXAMPLE
-    .\copy_jobs_to_secondary.ps1 -AvailabilityGroupName "AG_Production" -WhatIf
+    .\copy_jobs_to_secondary.ps1 -AvailabilityGroupName "AG_Production" -Job @("Backup_") -WhatIf
 
-    Preview which jobs would be copied without making any changes.
+    Preview which jobs matching the pattern would be copied.
 
 .EXAMPLE
     .\copy_jobs_to_secondary.ps1 -AvailabilityGroupName "AG_Production" -TrustServerCertificate
@@ -86,6 +96,8 @@ param(
     [string]$AvailabilityGroupName,
 
     [string]$SqlInstance,
+
+    [string[]]$Job = @(),
 
     [string[]]$ExcludeJobs = @(),
 
@@ -134,8 +146,14 @@ if (-not $secondaryReplicas) {
 Write-Host "Primary Replica: $primaryReplica"
 Write-Host "Secondary Replicas: $($secondaryReplicas -join ', ')"
 
-# Get jobs from primary replica (excluding specified jobs)
-$jobs = Get-DbaAgentJob -SqlInstance $primaryReplica | Where-Object { $ExcludeJobs -notcontains $_.Name }
+# Get jobs from primary replica (filter by Job and ExcludeJobs)
+$jobs = Get-DbaAgentJob -SqlInstance $primaryReplica
+
+# Filter jobs: include only those in $Job (if specified), then exclude $ExcludeJobs
+if ($Job.Count -gt 0) {
+    $jobs = $jobs | Where-Object { $Job -contains $_.Name }
+}
+$jobs = $jobs | Where-Object { $ExcludeJobs -notcontains $_.Name }
 
 Write-Host "Found $($jobs.Count) jobs to copy"
 
