@@ -17,6 +17,11 @@ DBA Scripts & Tools collection - not a traditional software project with build/t
 - No formal test suite exists - scripts are manually executed
 - Validate PowerShell syntax: `$null = [System.Management.Automation.PSParser]::Tokenize((Get-Content file -Raw), [ref]$null)`
 
+## Before Committing
+- Run the script or query to confirm it executes without errors before staging
+- Verify git status: `git status` — ensure only intended files are modified
+- Never commit secrets, credentials, or environment-specific values
+
 ## Community Tools Referenced (in README)
 - DBATools: https://dbatools.io/
 - Ola Hallengren Maintenance: https://ola.hallengren.com/
